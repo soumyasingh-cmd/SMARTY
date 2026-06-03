@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yash Smart Tuition</title>
+    <style>
+        :root { --p: #4a90e2; --s: #5cb85c; --d: #333; --l: #f4f7f6; --r: #d9534f; }
+        body { font-family: system-ui, sans-serif; background: var(--l); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--d); }
+        .box { width: 100%; max-width: 450px; background: white; min-height: 550px; border-radius: 12px; shadow: 0 8px 24px rgba(0,0,0,0.15); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+        #splash { position: absolute; inset: 0; background: linear-gradient(135deg, var(--p), #2c3e50); color: white; display: flex; justify-content: center; align-items: center; text-align: center; z-index: 10; transition: opacity .6s; font-size: 2rem; font-weight: bold; }
+        .scr { display: none; padding: 20px; flex-direction: column; flex-grow: 1; }
+        .scr.act { display: flex; }
+        button { background: var(--p); color: white; border: none; padding: 12px; margin: 8px 0; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button.s { background: var(--s); } button.r { background: var(--r); }
+        input, textarea { padding: 10px; margin: 6px 0 12px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+        .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 220px; margin: 0 auto; }
+        .key { background: #e0e0e0; border-radius: 50%; width: 55px; height: 55px; display: flex; justify-content: center; align-items: center; font-size: 1.4rem; cursor: pointer; user-select: none; }
+        .dots { text-align: center; font-size: 2rem; letter-spacing: 10px; height: 35px; color: var(--p); }
+        .bar { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 5px 10px; font-size: 0.85rem; }
+        .card { background: #f9f9f9; border-left: 5px solid var(--p); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+        .card img { max-width: 100%; border-radius: 4px; margin-top: 5px; display: block; }
+        .chat-c { margin-top: auto; border-top: 2px solid #eee; padding-top: 8px; display: flex; flex-direction: column; }
+        .msgs { overflow-y: auto; height: 110px; background: #fafafa; border: 1px solid #e1e1e1; padding: 6px; margin-bottom: 6px; border-radius: 4px; display: flex; flex-direction: column; }
+        .msg { margin-bottom: 6px; padding: 6px 10px; border-radius: 12px; max-width: 80%; font-size: 0.85rem; }
+        .msg.student { background: #e3f2fd; align-self: flex-start; }
+        .msg.teacher { background: #e8f5e9; align-self: flex-end; }
+        .row { display: flex; gap: 5px; } .row input { flex-grow: 1; margin: 0; } .row button { margin: 0; padding: 0 12px; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <div id="splash"><div>Yash Smart Tuition<br><small style="font-size:1.1rem; opacity:0.8;">Homework App</small></div></div>
+
+        <div id="scr-role" class="scr">
+            <h2 style="text-align:center;color:var(--p)">Welcome</h2>
+            <button onclick="setScr('stud-sign')">I am a Student (-1)</button>
+            <button class="s" onclick="routeTeacher()">I am a Teacher</button>
+        </div>
+
+        <div id="scr-stud-sign" class="scr">
+            <h2>Student Sign In</h2>
+            <input type="text" id="s-name" placeholder="Full Name">
+            <input type="text" id="s-cls" placeholder="Class / Grade">
+            <button onclick="submitStud()">Sign In</button>
+            <button class="r" onclick="setScr('role')">Back</button>
+        </div>
+
+        <div id="scr-teach-sign" class="scr">
+            <h2>Teacher Setup</h2>
+            <input type="text" id="t-name" placeholder="Teacher Name">
+            <input type="text" id="t-stud" placeholder="Assigned Student">
+            <input type="password" id="t-pin" maxlength="3" placeholder="Set 3-Digit Pin Password">
+            <button class="s" onclick="submitTeach()">Save & Launch</button>
+            <button class="r" onclick="setScr('role')">Back</button>
+        </div>
+
+        <div id="scr-lock" class="scr">
+            <h2 style="margin-bottom:0;">Locked</h2><div class="dots" id="dots"></div>
+            <div class="pad">
+                <script>for(let i=1;i<=9;i++) document.write(`<div class="key" onclick="press('${i}')">${i}</div>`);</script>
+                <div></div><div class="key" onclick="press('0')">0</div>
+                <div class="key" style="background:#ffc107; font-size:0.9rem;" onclick="clearPin()">Clear</div>
+            </div>
+            <p id="err" style="color:var(--r); text-align:center; font-weight:bold; height:15px;"></p>
+            <button class="r" onclick="setScr('role')">Back</button>
+        </div>
+
+        <div id="scr-t-dash" class="scr" style="padding:0;">
+            <div class="bar">
+                <button class="r" style="padding:3px 8px;" onclick="resetApp()">Restore</button>
+                <span id="t-title" style="font-weight:bold;">Teacher Hub</span>
+                <button style="padding:3px 8px; margin:0;" onclick="setScr('role')">Exit</button>
+            </div>
+            <div style="padding:15px; display:flex; flex-direction:column; flex-grow:1; overflow-y:auto;">
+                <textarea id="p-txt" rows="2" placeholder="Type Assignment Text..."></textarea>
+                <input type="file" id="p-file" accept="image/*">
+                <input type="text" id="p-url" placeholder="Or paste image URL">
+                <button class="s" onclick="postHw()">Publish Assignment</button>
+                <div class="chat-c">
+                    <strong style="font-size:0.8rem; color:var(--r)">Doubt Section Queries</strong>
+                    <div class="msgs" id="t-msgs"></div>
+                    <div class="row"><input type="text" id="t-chat" placeholder="Reply..."><button onclick="sendChat('teacher')">Send</button></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="scr-s-dash" class="scr">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span id="s-title" style="font-weight:bold; color:var(--p)">Student Hub</span>
+                <button style="padding:4px 10px; margin:0;" onclick="setScr('role')">Exit</button>
+            </div>
+            <h4 style="margin:10px 0 5px 0;">Homework Board</h4>
+            <div id="hw-box" style="overflow-y:auto; flex-grow:1; max-height:200px; border:1px dashed #bbb; padding:5px; background:#fafafa;"></div>
+            <div class="chat-c">
+                <strong style="font-size:0.8rem; color:var(--p)">Doubt Desk Section</strong>
+                <div class="msgs" id="s-msgs"></div>
+                <div class="row"><input type="text" id="s-chat" placeholder="Ask a question..."><button onclick="sendChat('student')">Ask</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('yash_db')) || { setup: false, name: "", stud: "", pin: "", hw: [], chat: [] };
+        let pinIn = "", swReg = null;
+
+        const swStr = `self.addEventListener('install', e => self.skipWaiting()); self.addEventListener('activate', e => e.waitUntil(self.clients.claim())); self.addEventListener('notificationclick', e => { e.notification.close(); e.waitUntil(clients.matchAll({type:'window', includeUncontrolled:true}).then(l => l.length ? l[0].focus() : clients.openWindow(self.location.origin))); });`;
+
+        window.onload = function() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register(URL.createObjectURL(new Blob([swStr], {type:'text/javascript'}))).then(r => swReg = r);
+            }
+            setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(()=>document.getElementById('splash').style.display='none',600); setScr('role'); Notification.requestPermission(); }, 2000);
+        };
+
+        function notify(t, m) { if(Notification.permission === 'granted' && swReg) swReg.showNotification(t, {body: m, icon: 'https://cdn-icons-png.flaticon.com/512/3652/3652191.png'}); }
+        function save() { localStorage.setItem('yash_db', JSON.stringify(db)); render(); }
+        function setScr(id) { document.querySelectorAll('.scr').forEach(s => s.classList.remove('act')); document.getElementById('scr-'+id).classList.add('act'); }
+        
+        function routeTeacher() { if(!db.setup) setScr('teach-sign'); else { pinIn = ""; updateDots(); document.getElementById('err').innerText = ""; setScr('lock'); } }
+        function submitStud() { let n = document.getElementById('s-name').value, c = document.getElementById('s-cls').value; if(!n||!c) return; document.getElementById('s-title').innerText = `${n} (${c})`; setScr('s-dash'); render(); }
+        function submitTeach() { let n = document.getElementById('t-name').value, s = document.getElementById('t-stud').value, p = document.getElementById('t-pin').value; if(!n||!s||p.length!=3) return alert('Fill fields. Pin must be 3 digits.'); db.name=n; db.stud=s; db.pin=p; db.setup=true; save(); document.getElementById('t-title').innerText = `Teacher: ${n}`; setScr('t-dash'); }
+        
+        function press(n) { if(pinIn.length < 3) pinIn += n; updateDots(); if(pinIn.length === 3) setTimeout(checkPin, 200); }
+        function clearPin() { pinIn = ""; updateDots(); document.getElementById('err').innerText = ""; }
+        function updateDots() { document.getElementById('dots').innerText = "•".repeat(pinIn.length) + "◦".repeat(3 - pinIn.length); }
+        function checkPin() { if(pinIn === db.pin) { document.getElementById('t-title').innerText = `Teacher: ${db.name}`; setScr('t-dash'); render(); } else { document.getElementById('err').innerText = "Incorrect Password"; pinIn = ""; updateDots(); } }
+        function resetApp() { if(confirm("Wipe all app profiles and actions?")) { localStorage.removeItem('yash_db'); location.reload(); } }
+
+        function postHw() {
+            let txt = document.getElementById('p-txt').value, f = document.getElementById('p-file').files[0], url = document.getElementById('p-url').value;
+            if(!txt && !f && !url) return;
+            if(f) { let r = new FileReader(); r.onload = function(e){ commitHw(txt, e.target.result); }; r.readAsDataURL(f); } 
+            else commitHw(txt, url || null);
+        }
+        function commitHw(t, img) { db.hw.unshift({t, img}); save(); document.getElementById('p-txt').value = document.getElementById('p-file').value = document.getElementById('p-url').value = ""; notify("New Homework Assigned!", t||"Image attached"); }
+
+        function sendChat(sender) {
+            let el = document.getElementById(sender === 'student' ? 's-chat' : 't-chat'), txt = el.value.trim(); if(!txt) return;
+            db.chat.push({sender, txt}); save(); el.value = ""; notify(sender === 'student' ? "New Student Doubt" : "Teacher Replied", txt);
+        }
+
+        function render() {
+            let hBox = document.getElementById('hw-box');
+            hBox.innerHTML = db.hw.length ? db.hw.map(h => `<div class="card">${h.t ? `<p style="margin:0;">${h.t}</p>`:''}${h.img ? `<img src="${h.img}">`:''}</div>`).join('') : '<p style="color:gray;text-align:center;">No homework.</p>';
+            let cHtml = db.chat.map(c => `<div class="msg ${c.sender}"><strong>${c.sender}:</strong> ${c.txt}</div>`).join('');
+            let sb = document.getElementById('s-msgs'), tb = document.getElementById('t-msgs');
+            sb.innerHTML = tb.innerHTML = cHtml; sb.scrollTop = sb.scrollHeight; tb.scrollTop = tb.scrollHeight;
+        }
+    </script>
+</body>
+</html>
